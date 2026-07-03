@@ -118,6 +118,7 @@ def _build_leaderboard(cards, stratify_keys: list[str]) -> dict:
             "avg_tests": round(avg("tests_ordered"), 1),
             "avg_cost_cny": round(avg("sim_cost_cny"), 1),
         }
+        entry.update(_aggregate_measurement_metrics(model_cards))
         results.append(entry)
 
     results.sort(key=lambda x: x["final"], reverse=True)
@@ -125,6 +126,34 @@ def _build_leaderboard(cards, stratify_keys: list[str]) -> dict:
         "suite": "v3",
         "total_cases": len(cards),
         "leaderboard": results,
+    }
+
+
+def _aggregate_measurement_metrics(cards: list) -> dict:
+    """Cross-case §2 metrics: ECE, Bayesian consistency, threshold acc, errors."""
+    from collections import Counter
+    from clinicraft.metrics.calibration import (
+        collect_confidence_pairs, expected_calibration_error,
+    )
+
+    ece_rep = expected_calibration_error(collect_confidence_pairs(cards))
+
+    bayes = [c.detail.get("bayesian_consistency") for c in cards]
+    bayes = [b for b in bayes if b is not None]
+    thr = [c.detail.get("threshold_correct") for c in cards]
+    thr = [t for t in thr if t is not None]
+    errors = Counter(
+        c.detail.get("primary_error") for c in cards
+        if c.detail.get("primary_error") and c.detail.get("primary_error") != "no_error"
+    )
+
+    return {
+        "ece": round(ece_rep.ece, 3),
+        "brier": round(ece_rep.brier, 3),
+        "overconfidence": round(ece_rep.overconfidence, 3),
+        "bayesian_consistency": round(sum(bayes) / len(bayes), 3) if bayes else None,
+        "threshold_accuracy": round(sum(thr) / len(thr), 3) if thr else None,
+        "error_spectrum": dict(errors.most_common()),
     }
 
 

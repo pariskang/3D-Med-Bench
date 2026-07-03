@@ -141,6 +141,12 @@ def compute_score(
         "C4": card.C4, "C5": card.C5, "C6": card.C6,
         "raw": card.raw, "gate": card.gate, "penalty": card.penalty,
         "veto_items": verdict.veto_triggered,
+        # §2 measurement detail for cross-case aggregation / error spectrum.
+        "final_confidence": verdict.metrics.get("final_confidence"),
+        "bayesian_consistency": verdict.metrics.get("bayesian_consistency"),
+        "threshold_correct": verdict.metrics.get("threshold_correct"),
+        "primary_error": verdict.metrics.get("primary_error"),
+        "cognitive_errors": verdict.cognitive_errors,
     }
 
     return card

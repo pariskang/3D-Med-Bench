@@ -164,8 +164,8 @@ def auto_generate_rubric_requirements(gtg: GroundTruthGraph) -> list[dict]:
 
     # C2 — Reasoning quality
     reqs.append(_req("C2", "提交结构化问题表征(problem representation)", 2.0))
-    reqs.append(_req("C2", "阳性发现后主诊断概率贝叶斯一致更新", 3.0, auto=True))
-    reqs.append(_req("C2", "当后验概率跨越治疗阈值时触发正确决策", 3.0))
+    reqs.append(_req("C2", "阳性发现后主诊断概率贝叶斯一致更新(LR)", 3.0, auto=True))
+    reqs.append(_req("C2", "当后验概率跨越治疗阈值时触发正确决策(threshold)", 3.0, auto=True))
 
     # C3 — 3D interaction & perception
     for sign in gtg.visible_signs:

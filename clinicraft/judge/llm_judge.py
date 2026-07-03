@@ -46,6 +46,8 @@ class JudgeVerdict(BaseModel):
     requirement_scores: list[RequirementScore] = []
     completeness_ok: bool = True
     veto_triggered: list[str] = []
+    cognitive_errors: list[dict] = []      # §2.2 DEER/Graber error spectrum
+    metrics: dict = {}                      # bayesian/threshold/calibration detail
     judge_model: str = ""
     schema_version: str = "3.0"
 
@@ -106,6 +108,7 @@ async def judge_encounter(
 
     rubric = Rubric.model_validate_json(rubric_path.read_text())
     gtg_json = gtg_path.read_text(encoding="utf-8")
+    gtg_dict = json.loads(gtg_json)
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
     trace_excerpt = _build_trace_excerpt(trace)
 
@@ -118,6 +121,9 @@ async def judge_encounter(
     # Completeness check
     verdict.completeness_ok = _check_completeness(trace, rubric)
 
+    # §2.2 cognitive-error spectrum + §2.1 reasoning metrics (deterministic).
+    verdict.cognitive_errors, verdict.metrics = _analyse_reasoning(trace, gtg_dict)
+
     import asyncio
     from clinicraft.judge.multimodal_judge import judge_visual_perception
 
@@ -127,7 +133,7 @@ async def judge_encounter(
     for req in rubric.requirements:
         if req.auto:
             # Auto-scored items are appended immediately; they can still veto.
-            verdict.requirement_scores.append(_auto_score(req, trace))
+            verdict.requirement_scores.append(_auto_score(req, trace, gtg_dict))
         elif req.judge == "multimodal":
             tasks.append(judge_visual_perception(req, trace_excerpt, frames, client))
         elif req.judge == "llm":
@@ -174,22 +180,28 @@ def _build_trace_excerpt(trace: dict) -> str:
     return "\n".join(lines)
 
 
-def _auto_score(req: RubricRequirement, trace: dict) -> RequirementScore:
-    """Deterministic scoring for auto=True requirements."""
+def _auto_score(req: RubricRequirement, trace: dict, gtg: dict | None = None) -> RequirementScore:
+    """Deterministic scoring for auto=True requirements, backed by real metrics."""
+    gtg = gtg or {}
     score = 0.0
     rationale = "自动评分"
 
-    if "贝叶斯" in req.description:
-        score = _check_bayesian_update(trace)
-        rationale = f"贝叶斯更新一致性分析: {score}"
+    if "贝叶斯" in req.description or "LR" in req.description:
+        from clinicraft.metrics.bayesian import BayesianTrace, score_bayesian_consistency
+        bt = BayesianTrace.from_trace(trace)
+        c = score_bayesian_consistency(bt)
+        score = 0.5 if c is None else c
+        rationale = (
+            f"贝叶斯一致性={score:.2f} (snapshots={len(bt.snapshots)}, findings={len(bt.findings)})"
+        )
+    elif "阈值" in req.description or "threshold" in req.description.lower():
+        score, rationale = _score_threshold(trace, gtg)
     elif "成本" in req.description or "Choosing" in req.description:
         score = _check_overtesting(trace)
-        rationale = f"过度检查检测: {score}"
-    elif "ECE" in req.description:
-        score = _check_calibration(trace)
-        rationale = f"校准分析: {score}"
+        rationale = f"过度检查检测={score:.2f}"
+    elif "ECE" in req.description or "校准" in req.description:
+        score, rationale = _score_calibration(trace, gtg)
     else:
-        # Default: check if action type appears in trace
         key = req.description[:20]
         for t in trace.get("turns", []):
             if key in json.dumps(t.get("action", {}), ensure_ascii=False):
@@ -199,23 +211,109 @@ def _auto_score(req: RubricRequirement, trace: dict) -> RequirementScore:
     return RequirementScore(req_id=req.id, score=score, rationale=rationale)
 
 
-def _check_bayesian_update(trace: dict) -> float:
-    """Check if differential probabilities increase after positive findings (simplified)."""
-    diffs = []
+def _score_threshold(trace: dict, gtg: dict) -> tuple[float, str]:
+    """§2.1 threshold decision: is the model's test-vs-treat action correct?"""
+    from clinicraft.metrics.bayesian import (
+        BayesianTrace, leading_posterior, score_threshold_decision,
+    )
+    bt = BayesianTrace.from_trace(trace)
+    lead = leading_posterior(bt)
+    if not lead:
+        return 0.5, "无差异诊断概率，无法评估阈值决策"
+    _dx, posterior = lead
+    model_action = _extract_decision_verb(trace)
+    dec = score_threshold_decision(
+        posterior,
+        gtg.get("test_threshold", 0.05),
+        gtg.get("treatment_threshold", 0.70),
+        model_action,
+    )
+    return (1.0 if dec.correct else 0.0), (
+        f"后验={posterior:.2f} 应为「{dec.correct_action}」, 模型「{dec.model_action}」"
+    )
+
+
+def _score_calibration(trace: dict, gtg: dict) -> tuple[float, str]:
+    """
+    Per-encounter calibration: confidence should track correctness.
+    Score = 1 - (confidence - correct)^2  (per-item Brier complement).
+    Cross-case ECE is aggregated separately by metrics.calibration.
+    """
+    from clinicraft.metrics.consistency import _normalise_dx, extract_final_dx
+    conf = None
+    for t in reversed(trace.get("turns", [])):
+        a = t.get("action", {})
+        if a.get("action") == "submit_diagnosis":
+            conf = a.get("params", {}).get("confidence")
+            break
+    if conf is None:
+        return 0.5, "无置信度，无法评估校准"
+    final_dx = extract_final_dx(trace)
+    correct = 1.0 if (final_dx and _normalise_dx(final_dx) == _normalise_dx(gtg.get("final_dx", ""))) else 0.0
+    brier_item = (float(conf) - correct) ** 2
+    return max(0.0, 1.0 - brier_item), (
+        f"置信度={conf}, 正确={bool(correct)}, 单例Brier={brier_item:.2f}"
+    )
+
+
+def _extract_decision_verb(trace: dict) -> str | None:
+    """Find the model's decision (choose_next_step > terminal action)."""
     for t in trace.get("turns", []):
-        action = t.get("action", {})
-        if action.get("action") == "submit_differential":
-            diffs.append(action.get("params", {}).get("ranked", []))
-    if len(diffs) < 2:
-        return 0.5
-    # Check if top diagnosis probability is non-decreasing after findings
-    tops = []
-    for d in diffs:
-        if d:
-            tops.append(max(e.get("p", 0) for e in d))
-    if len(tops) >= 2 and tops[-1] >= tops[0]:
-        return 1.0
-    return 0.3
+        a = t.get("action", {})
+        if a.get("action") == "choose_next_step":
+            return a.get("params", {}).get("decision")
+    # fall back to terminal action type
+    for t in reversed(trace.get("turns", [])):
+        a = t.get("action", {})
+        if a.get("action") in ("prescribe", "submit_plan", "refer", "escalate"):
+            return a.get("action")
+        if a.get("action") in ("order_test", "order_imaging"):
+            return "test"
+    return None
+
+
+def _analyse_reasoning(trace: dict, gtg: dict) -> tuple[list[dict], dict]:
+    """Run the deterministic §2.1/§2.2 metrics; return (error_spectrum, metrics)."""
+    from clinicraft.metrics.bayesian import (
+        BayesianTrace, leading_posterior, score_bayesian_consistency,
+        score_threshold_decision,
+    )
+    from clinicraft.metrics.error_taxonomy import classify_cognitive_errors
+
+    bt = BayesianTrace.from_trace(trace)
+    bayes = score_bayesian_consistency(bt)
+    metrics: dict = {
+        "bayesian_consistency": bayes,
+        "n_diff_snapshots": len(bt.snapshots),
+        "n_lr_findings": len(bt.findings),
+    }
+    lead = leading_posterior(bt)
+    if lead:
+        dx, post = lead
+        dec = score_threshold_decision(
+            post, gtg.get("test_threshold", 0.05),
+            gtg.get("treatment_threshold", 0.70), _extract_decision_verb(trace),
+        )
+        metrics["leading_dx"] = dx
+        metrics["leading_posterior"] = post
+        metrics["threshold_correct"] = dec.correct
+        metrics["threshold_expected"] = dec.correct_action
+
+    # confidence for cross-case ECE aggregation
+    for t in reversed(trace.get("turns", [])):
+        a = t.get("action", {})
+        if a.get("action") == "submit_diagnosis":
+            metrics["final_confidence"] = a.get("params", {}).get("confidence")
+            break
+
+    report = classify_cognitive_errors(trace, gtg)
+    errors = [
+        {"error": e.error.value, "strength": e.signal_strength, "evidence": e.evidence}
+        for e in report.errors
+    ]
+    metrics["diagnosis_correct"] = report.diagnosis_correct
+    metrics["primary_error"] = report.primary().value
+    return errors, metrics
 
 
 def _check_overtesting(trace: dict) -> float:
@@ -228,20 +326,6 @@ def _check_overtesting(trace: dict) -> float:
     elif tests_ordered <= 10:
         return 0.5
     return 0.0
-
-
-def _check_calibration(trace: dict) -> float:
-    confidences = []
-    for t in trace.get("turns", []):
-        a = t.get("action", {})
-        if a.get("action") == "submit_diagnosis":
-            c = a.get("params", {}).get("confidence")
-            if c is not None:
-                confidences.append(float(c))
-    if not confidences:
-        return 0.5
-    avg_conf = sum(confidences) / len(confidences)
-    return 1.0 if 0.5 <= avg_conf <= 0.95 else 0.3
 
 
 def _check_completeness(trace: dict, rubric: Rubric) -> bool:
