@@ -22,7 +22,9 @@ from loguru import logger
 
 from clinicraft.config import settings
 from clinicraft.pipeline.stage3_gtg import auto_generate_rubric_requirements
-from clinicraft.schemas.case_pack import CasePack, PhysioConfig, Strata, Source, WorldConfig
+from clinicraft.schemas.case_pack import (
+    CasePack, PatientConfig, PhysioConfig, Strata, Source, WorldConfig,
+)
 from clinicraft.schemas.clinical_case import ClinicalCase
 from clinicraft.schemas.ground_truth import GroundTruthGraph
 from clinicraft.schemas.rubric import (
@@ -83,9 +85,21 @@ def pack_case(
                 dynamic_coverage=physio_result.get("dynamic_coverage", 0.0),
                 initial_state=physio_result.get("initial_state", {}),
             ),
+            # F3: carry the persona/disclosure/avatar authored in Stage 5.
+            patient=PatientConfig.model_validate(
+                embody_result.get("patient_config") or {}
+            ),
             available_tests=_collect_available_tests(gtg),
             available_imaging=_collect_available_imaging(gtg),
         ),
+    )
+    # Persist the avatar + render params alongside the pack for the renderer.
+    render_manifest = {
+        "avatar_spec": embody_result.get("avatar_spec", {}),
+        "render_params": embody_result.get("render_params", []),
+    }
+    (case_dir / "resources" / "render_manifest.json").write_text(
+        json.dumps(render_manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     pack.save(case_dir)
 
@@ -97,14 +111,18 @@ def pack_case(
         encoding="utf-8",
     )
 
-    # --- oracle/context.json (oracle agent gets GTG + ideal workup) ---
+    # --- oracle/context.json (oracle agent gets full GTG scaffolding) ---
     oracle_ctx = {
         "case_id": case.case_id,
+        "problem_representation": gtg.problem_representation,
         "final_dx": gtg.final_dx,
         "differential": [d.model_dump() for d in gtg.differential],
         "expert_reasoning_trace": gtg.expert_reasoning_trace,
         "ideal_workup": [w.model_dump() for w in gtg.ideal_workup],
         "management_plan": [m.model_dump() for m in gtg.management_plan],
+        "visible_signs": [s.model_dump() for s in gtg.visible_signs],
+        "red_flags": gtg.red_flags,
+        "safety_net_items": gtg.safety_net_items,
     }
     (case_dir / "oracle" / "context.json").write_text(
         json.dumps(oracle_ctx, ensure_ascii=False, indent=2),
@@ -128,8 +146,12 @@ def _write_presentation(case_dir: Path, case: ClinicalCase, gtg: GroundTruthGrap
         "",
         "## 就诊情境",
     ]
-    if case.age:
-        lines.append(f"患者，年龄段 {case.social_history or '（见档案）'}，")
+    # After de-id, exact age is nulled and age_band is set; show the band.
+    sex_cn = {"M": "男性", "F": "女性"}.get(case.sex.value if case.sex else "", "")
+    band = case.age_band or (str(case.age) + "岁" if case.age else "")
+    descriptor = "，".join(x for x in [f"{band}" if band else "", sex_cn] if x)
+    if descriptor:
+        lines.append(f"患者，{descriptor}。")
     if case.vitals:
         lines.append("")
         lines.append("## 初始生命体征")

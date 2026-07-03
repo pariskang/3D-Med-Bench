@@ -163,7 +163,8 @@ async def run_pipeline_simple(txt_path: Path) -> dict:
     case = await ingest_file(txt_path, client=client)
     clean, deid_report = deid_case(case)
     gtg = await build_gtg(clean, client=client)
-    physio = await ground_case(gtg)
+    from clinicraft.pipeline.stage4_physio import parse_case_vitals
+    physio = await ground_case(gtg, initial_vitals=parse_case_vitals(clean.vitals))
     embody = embody_case(clean, gtg)
     case_dir = pack_case(clean, gtg, physio, embody)
     qc = qc_case_directory(case_dir)

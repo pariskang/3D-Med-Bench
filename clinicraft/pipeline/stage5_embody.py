@@ -56,8 +56,7 @@ def embody_case(
     patient_config = PatientConfig(
         age=case.age,
         sex=case.sex.value if case.sex else None,
-        persona=gtg.world_config_hints.get("persona", "cooperative")
-        if hasattr(gtg, "world_config_hints") else "cooperative",
+        persona=_derive_persona(gtg),
     )
 
     logger.info(
@@ -70,6 +69,18 @@ def embody_case(
         "avatar_spec": avatar_spec,
         "perception_tier": tier,
     }
+
+
+def _derive_persona(gtg: GroundTruthGraph) -> str:
+    """
+    Derive a patient persona from the case. Anxiety-provoking or error-prone
+    cases get a less cooperative persona to raise interaction difficulty.
+    """
+    if gtg.error_prone:
+        return "anxious"
+    if gtg.difficulty == "hard":
+        return "dismissive"
+    return "cooperative"
 
 
 def _select_avatar(case: ClinicalCase) -> dict:

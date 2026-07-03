@@ -47,6 +47,7 @@ class PatientHost:
         self._memory = MemoryStream()
         self._guard = HallucinationGuard(gtg.atomic_facts)
         self._turn = 0
+        self.tokens = 0
 
     def _build_system(self) -> str:
         style = {
@@ -89,6 +90,8 @@ class PatientHost:
             system=self._build_system(),
             messages=messages,
         )
+        if resp.usage:
+            self.tokens += resp.usage.input_tokens + resp.usage.output_tokens
         patient_text = resp.content[0].text.strip()
 
         # Hallucination check

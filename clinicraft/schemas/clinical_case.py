@@ -108,6 +108,7 @@ class ClinicalCase(BaseModel):
 
     # Demographics (will be partially removed in Stage 2)
     age: int | None = None
+    age_band: str | None = None      # set by de-id (e.g. "55-59岁"); age nulled
     sex: Sex | None = None
     ethnicity: str | None = None
 

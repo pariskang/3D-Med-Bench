@@ -112,8 +112,13 @@ async def _run_episode(pack, gtg, model_id: str, pmode, case_dir: Path, seed: in
             break
 
     trace.wall_time_s = time.time() - start
-    trace.tests_ordered = env._budget.tests_ordered
-    trace.sim_cost_cny = env._budget.sim_cost_cny
+    trace.tests_ordered = env.budget.tests_ordered
+    trace.sim_cost_cny = env.budget.sim_cost_cny
+    trace.final_submission = env.final_submission or None
+    # Token accounting: doctor agent + patient host (judges counted at eval).
+    doctor_tokens = getattr(agent_obj, "tokens", 0)
+    patient_tokens = patient.tokens
+    trace.total_tokens = doctor_tokens + patient_tokens
 
     return {k: v for k, v in trace.__dict__.items() if not k.startswith("_")}
 
@@ -137,6 +142,7 @@ def _make_llm_doctor(model_id: str, client, pack):
 
         def __init__(self):
             self._history = []
+            self.tokens = 0
 
         async def act(self, obs_dict: dict) -> Action:
             dialogue = obs_dict.get("channels", {}).get("dialogue", "")
@@ -161,6 +167,8 @@ def _make_llm_doctor(model_id: str, client, pack):
                 system=self._SYSTEM,
                 messages=self._history[-20:],
             )
+            if response.usage:
+                self.tokens += response.usage.input_tokens + response.usage.output_tokens
             text = response.content[0].text.strip()
             self._history.append({"role": "assistant", "content": text})
 

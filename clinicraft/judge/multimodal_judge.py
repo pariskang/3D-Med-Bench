@@ -29,28 +29,43 @@ MULTIMODAL_SYSTEM = """你是一位临床医学教育专家，同时负责评估
 给出 score（0/0.5/1）和简要rationale。"""
 
 
+def _to_image_block(frame: "str | Path") -> dict[str, Any] | None:
+    """Accept a data URI, a text-frame:// stub, or a PNG file path."""
+    s = str(frame)
+    if s.startswith("data:image/"):
+        header, _, b64 = s.partition(",")
+        media = header.split(";")[0].removeprefix("data:") or "image/png"
+        return {"type": "image", "source": {"type": "base64", "media_type": media, "data": b64}}
+    if s.startswith("text-frame://"):
+        return None  # non-visual fallback frame — nothing to show the vision model
+    p = Path(s)
+    if p.exists():
+        data = base64.standard_b64encode(p.read_bytes()).decode()
+        return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": data}}
+    return None
+
+
 async def judge_visual_perception(
     req: RubricRequirement,
     trace_excerpt: str,
-    frame_paths: list[Path],
+    frame_paths: "list[str | Path]",
     client: anthropic.AsyncAnthropic | None = None,
 ) -> RequirementScore:
     """
     Multimodal judge for C3 visual perception requirements.
     Sends image frames + trace to Claude vision API.
+    Frames may be data URIs (from the trace) or PNG file paths.
     """
     client = client or anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
 
     # Build image content blocks
     content: list[dict[str, Any]] = []
     for fp in frame_paths[:4]:  # max 4 frames per assessment
-        if fp.exists():
-            data = base64.standard_b64encode(fp.read_bytes()).decode()
-            content.append({
-                "type": "image",
-                "source": {"type": "base64", "media_type": "image/png", "data": data},
-            })
+        block = _to_image_block(fp)
+        if block:
+            content.append(block)
 
+    has_images = len(content) > 0
     content.append({
         "type": "text",
         "text": (
@@ -63,12 +78,12 @@ async def judge_visual_perception(
         ),
     })
 
-    if not frame_paths:
-        # No frames available — fall back to text-only assessment
-        logger.warning(f"No frames for multimodal judge on {req.id}, falling back to LLM")
+    if not has_images:
+        # No usable image frames — cannot assess visual perception.
+        logger.warning(f"No image frames for multimodal judge on {req.id}")
         return RequirementScore(
-            req_id=req.id, score=0.5,
-            rationale="无视频帧可用，无法评估3D感知",
+            req_id=req.id, score=0.0,
+            rationale="无可用视频帧，无法评估3D感知（渲染器未产生图像）",
             confidence=0.3,
         )
 

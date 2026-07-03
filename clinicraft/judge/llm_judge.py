@@ -119,26 +119,46 @@ async def judge_encounter(
     verdict.completeness_ok = _check_completeness(trace, rubric)
 
     import asyncio
+    from clinicraft.judge.multimodal_judge import judge_visual_perception
+
+    frames = _extract_frames(trace)
+
     tasks = []
     for req in rubric.requirements:
         if req.auto:
-            score = _auto_score(req, trace)
-            verdict.requirement_scores.append(score)
-        elif req.judge in ("llm", "multimodal"):
-            tasks.append(_score_requirement(
-                client, judge_model, req, trace_excerpt, gtg_json
-            ))
+            # Auto-scored items are appended immediately; they can still veto.
+            verdict.requirement_scores.append(_auto_score(req, trace))
+        elif req.judge == "multimodal":
+            tasks.append(judge_visual_perception(req, trace_excerpt, frames, client))
+        elif req.judge == "llm":
+            tasks.append(_score_requirement(client, judge_model, req, trace_excerpt, gtg_json))
+        # judge == "human"/"auto" but auto=False → deferred to human review; skip.
 
-    llm_scores = await asyncio.gather(*tasks, return_exceptions=True)
-    for s in llm_scores:
+    judged = await asyncio.gather(*tasks, return_exceptions=True)
+    for s in judged:
         if isinstance(s, RequirementScore):
             verdict.requirement_scores.append(s)
-            if _is_veto(s, rubric):
-                verdict.veto_triggered.append(s.req_id)
         else:
             logger.error(f"Judge task failed: {s}")
 
+    # Veto check runs over ALL scored requirements (auto + llm + multimodal).
+    for s in verdict.requirement_scores:
+        if _is_veto(s, rubric):
+            verdict.veto_triggered.append(s.req_id)
+
     return verdict
+
+
+def _extract_frames(trace: dict) -> list:
+    """Collect unique vision frames (data URIs / paths) from trace observations."""
+    seen: list = []
+    for turn in trace.get("turns", []):
+        vision = turn.get("observation", {}).get("channels", {}).get("vision")
+        if vision and vision.get("frames"):
+            for f in vision["frames"]:
+                if f not in seen:
+                    seen.append(f)
+    return seen[:8]  # cap to bound judge cost
 
 
 def _build_trace_excerpt(trace: dict) -> str:
@@ -227,9 +247,19 @@ def _check_calibration(trace: dict) -> float:
 def _check_completeness(trace: dict, rubric: Rubric) -> bool:
     cc = rubric.completeness_check
     action_types = {t.get("action", {}).get("action") for t in trace.get("turns", [])}
-    if cc.must_take_vitals and "inspect" not in action_types and "order_test" not in action_types:
+    # "Taking vitals" = any examination/observation action that reads the patient
+    # (vitals are always shown in structured_state, so any active exam counts).
+    vitals_actions = {"inspect", "auscultate", "palpate", "percuss", "check_pulse",
+                      "check_cap_refill", "observe_task", "order_test"}
+    if cc.must_take_vitals and action_types.isdisjoint(vitals_actions):
+        return False
+    if cc.must_submit_problem_rep and "submit_problem_rep" not in action_types:
+        return False
+    if cc.must_submit_differential and "submit_differential" not in action_types:
         return False
     if cc.must_submit_diagnosis and "submit_diagnosis" not in action_types:
+        return False
+    if cc.must_provide_safety_net and "safety_net" not in action_types:
         return False
     return True
 
