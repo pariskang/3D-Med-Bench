@@ -72,10 +72,10 @@ publication-grade), and **planned** (integration seam exists, not yet built).
 
 | Capability | Status | Notes |
 |---|---|---|
-| Pydantic schemas (case / GTG / interaction / rubric / pack) | ✅ functional | 46 unit tests |
+| Pydantic schemas (case / GTG / interaction / rubric / pack) | ✅ functional | 63 unit tests |
 | Stage 1 ingestion (txt → ClinicalCase) | ✅ functional | needs `ANTHROPIC_API_KEY` |
 | Stage 2 de-identification (GB/T 42460) | ✅ functional | per-field scrub, **fails closed**; Presidio NER upgrade planned |
-| Stage 3–7 (GTG → grounding → embody → pack → QC) | ✅ functional | GTG is LLM-drafted; expert validation is manual (see below) |
+| Stage 3–7 (GTG → grounding → embody → pack → QC) | ✅ functional | GTG is LLM-drafted, then expert-validated via the annotation workflow |
 | Typed observation–action loop (§5) | ✅ functional | oracle runs end-to-end offline |
 | Six-dimension scorer + hard-veto (§7) | ✅ functional | renormalised; real Bayesian-LR/threshold/ECE metrics back C2/C6 |
 | Oracle / nop calibration anchors (§8) | ✅ functional | oracle exercises C1–C4/C6 |
@@ -83,13 +83,13 @@ publication-grade), and **planned** (integration seam exists, not yet built).
 | Physiology (Pulse Engine) | ⚠️ stub | `MockPulseClient` unless SDK installed & wired |
 | 3D rendering (frame_stream) | ⚠️ stub | `StubSceneRenderer` draws labelled placeholder PNGs. **Photoreal Godot/UE5 is planned** — do not publish frame_stream C3 results from stub renders |
 | Multimodal judge (C3) | ✅ functional | scores real frames; scores 0 when no image frame is available |
-| Expert double-validation of GTG (Stage 3) | ⛔ planned | `validated=False` until a human annotation workflow lands |
+| Expert double-validation of GTG (Stage 3) | ✅ functional | file-based ≥2-physician review + arbitration; Cohen/weighted/Fleiss κ gate (`scripts/annotate_gtg.py`) |
 | §2.2 cognitive-error taxonomy (DEER/Graber) | ✅ functional | rule-based classifier over trace+GTG; `clinicraft/metrics/error_taxonomy.py` |
 | §2.5 real ECE + 10-run consistency | ✅ functional | binned ECE/Brier + consistency harness (`scripts/run_consistency.py`) |
 | TCM 望闻问切 track (§12) | ⚠️ partial | actions routed to exam resolver; sign library seeded, dedicated 辨证 rubric planned |
 
-See the protocol for the full specification. The remaining planned items
-(photoreal renderer, Pulse wiring, expert-annotation UI) are the next milestones (§11 P1–P2).
+See the protocol for the full specification. The remaining stub/planned items
+(photoreal renderer, real Pulse wiring) are the next milestones (§11 P1–P2).
 
 ---
 
@@ -97,7 +97,7 @@ See the protocol for the full specification. The remaining planned items
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest tests/ -q          # 46 tests, no API key required
+python -m pytest tests/ -q          # 63 tests, no API key required
 ruff check clinicraft/
 ```
 
