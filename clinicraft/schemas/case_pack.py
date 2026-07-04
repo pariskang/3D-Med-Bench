@@ -9,8 +9,9 @@ from pydantic import BaseModel, Field
 
 
 class PhysioConfig(BaseModel):
-    engine: Literal["pulse", "scripted", "none"] = "scripted"
-    scenario_xml: str | None = None     # path to Pulse scenario XML
+    engine: Literal["pulse", "dataset", "scripted", "none"] = "scripted"
+    scenario_id: str | None = None      # PhysioScenario id (dataset backend)
+    scenario_xml: str | None = None     # path to real Pulse scenario JSON/XML
     dynamic_coverage: float = 0.0       # fraction of findings from live engine
     initial_state: dict[str, Any] = {}
 

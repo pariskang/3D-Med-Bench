@@ -43,8 +43,17 @@ class HybridGrounder:
         total = len(gtg.ideal_workup) or 1
         dynamic_coverage = round(len(live_tests) / total, 3)
 
-        # Determine engine: use Pulse if any live findings exist
-        engine = "pulse" if live_tests else "scripted"
+        # Select a literature-grounded physiological scenario for this case.
+        from clinicraft.physio.scenario import ScenarioLibrary
+        condition_text = " ".join([
+            gtg.problem_representation, gtg.final_dx, gtg.specialty,
+            " ".join(d.dx for d in gtg.differential),
+        ])
+        scenario = ScenarioLibrary.load().select_for_condition(condition_text, gtg.final_dx)
+        scenario_id = scenario.scenario_id if scenario else None
+
+        # Engine: dataset when a scenario matched, else scripted.
+        engine = "dataset" if scenario_id else ("pulse" if live_tests else "scripted")
 
         # Build initial state from GTG initial vitals + case vitals
         initial_state: dict[str, Any] = {
@@ -58,6 +67,7 @@ class HybridGrounder:
 
         return {
             "engine": engine,
+            "scenario_id": scenario_id,
             "live_tests": live_tests,
             "scripted_tests": scripted_tests,
             "live_count": len(live_tests),

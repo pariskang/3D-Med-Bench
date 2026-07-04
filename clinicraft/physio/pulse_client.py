@@ -82,13 +82,29 @@ class MockPulseClient:
             self._state["HR"] = min(130, self._state["HR"] + dose)
 
 
-def get_pulse_client() -> PulseClientProtocol:
-    """Factory: returns real Pulse client if SDK available, else mock."""
+def get_pulse_client(scenario_id: str | None = None) -> PulseClientProtocol:
+    """
+    Factory. Preference order:
+      1. Real Kitware Pulse Physiology Engine, if its Python bindings are present.
+      2. DatasetPulseClient — replays a literature-grounded PhysioScenario
+         (data-driven, treatment-responsive, deterministic). Default backend.
+      3. MockPulseClient — last-resort constant/decay stub.
+    NB: the PyPI names `pulse-engine` and `PyPulse` are UNRELATED packages
+    (a social-media framework and a pulsar-astronomy tool); we deliberately do
+    not import those. Only the genuine Kitware `pulse.engine.PulseEngine` counts.
+    """
     try:
-        from pulse.cdm.engine import SEPhysiologyEngine  # type: ignore[import]
-        # Real Pulse SDK found — wrap it
-        return _RealPulseClient(SEPhysiologyEngine())
-    except ImportError:
+        from pulse.engine.PulseEngine import PulseEngine  # type: ignore[import]
+        return _RealPulseClient(PulseEngine())
+    except Exception:
+        pass
+    try:
+        from clinicraft.physio.dataset_client import DatasetPulseClient
+        from clinicraft.physio.scenario import ScenarioLibrary
+        scenario = ScenarioLibrary.load().get(scenario_id) if scenario_id else None
+        return DatasetPulseClient(scenario)  # type: ignore[return-value]
+    except Exception as e:
+        logger.warning(f"DatasetPulseClient unavailable ({e}); using MockPulseClient")
         return MockPulseClient()  # type: ignore[return-value]
 
 

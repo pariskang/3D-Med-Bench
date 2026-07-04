@@ -82,6 +82,7 @@ def pack_case(
             seed=seed,
             physio=PhysioConfig(
                 engine=physio_result.get("engine", "scripted"),
+                scenario_id=physio_result.get("scenario_id"),
                 dynamic_coverage=physio_result.get("dynamic_coverage", 0.0),
                 initial_state=physio_result.get("initial_state", {}),
             ),

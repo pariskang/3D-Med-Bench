@@ -92,7 +92,7 @@ class ClinicalEnvironment:
         self._turn = 0
         self._elapsed_sim_min = 0
         self._budget = Budget()
-        self._physio_client = get_pulse_client()
+        self._physio_client = get_pulse_client(pack.world_config.physio.scenario_id)
         self._vitals: dict[str, Any] = dict(
             pack.world_config.physio.initial_state
         )
@@ -113,10 +113,15 @@ class ClinicalEnvironment:
 
     async def reset(self) -> Observation:
         """Initialise physio engine and return first observation."""
+        physio = self._pack.world_config.physio
         await self._physio_client.initialise(
-            self._pack.world_config.physio.scenario_xml or "",
-            self._pack.world_config.physio.initial_state,
+            physio.scenario_id or physio.scenario_xml or "",
+            physio.initial_state,
         )
+        # Sync starting vitals from the engine's baseline so turn-1 reflects it.
+        state = await self._physio_client.get_state()
+        self._vitals.update({k: v for k, v in state.items()
+                             if k in ("HR", "SBP", "DBP", "RR", "SpO2", "T", "GCS")})
         self._turn = 1   # first observation is turn 1 (not 0)
         return self._build_observation(last_result=None)
 

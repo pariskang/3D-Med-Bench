@@ -1,0 +1,34 @@
+scenario_id: respiratory_failure_type2
+condition: "respiratory failure|呼吸衰竭|COPD|慢阻肺|hypercapnia|高碳酸血症|II型呼吸衰竭|type 2"
+description: >
+  Type-2 (hypercapnic) respiratory failure in a COPD exacerbation. Untreated,
+  the patient tires: respiratory rate paradoxically falls, SpO2 drops and PaCO2
+  climbs toward CO2 narcosis.
+source: >
+  GOLD COPD strategy; target SpO2 88-92% with controlled oxygen; NIV lowers
+  PaCO2 and averts intubation in acute hypercapnic failure.
+baseline: {HR: 105, SBP: 145, DBP: 88, RR: 30, SpO2: 85, T: 37.2, PaCO2: 62, GCS: 14}
+untreated_trajectory:
+  - {t_min: 0,  HR: 105, SBP: 145, DBP: 88, RR: 30, SpO2: 85, PaCO2: 62, GCS: 14}
+  - {t_min: 20, HR: 112, SBP: 150, DBP: 90, RR: 34, SpO2: 80, PaCO2: 70, GCS: 13}
+  - {t_min: 40, HR: 118, SBP: 140, DBP: 82, RR: 20, SpO2: 75, PaCO2: 85, GCS: 10}
+  - {t_min: 60, HR: 120, SBP: 125, DBP: 74, RR: 12, SpO2: 68, PaCO2: 98, GCS: 7}
+treatments:
+  - treatment: controlled_oxygen
+    aliases: ["oxygen", "o2", "吸氧", "氧疗", "venturi", "面罩", "nasal cannula", "鼻导管"]
+    onset_min: 1.0
+    tau_min: 3.0
+    targets: {SpO2: 90}
+    note: "Controlled O2 to SpO2 88-92%; over-oxygenation risks worse hypercapnia."
+  - treatment: niv_bipap
+    aliases: ["niv", "bipap", "无创", "noninvasive", "ventilation", "通气", "呼吸机"]
+    onset_min: 2.0
+    tau_min: 8.0
+    targets: {PaCO2: 48, RR: 20, SpO2: 93, HR: 95, GCS: 15}
+    note: "Decisive for hypercapnic failure — lowers PaCO2, offloads work."
+  - treatment: bronchodilator
+    aliases: ["salbutamol", "沙丁胺醇", "nebulizer", "雾化", "bronchodilator", "支气管扩张", "ipratropium", "异丙托"]
+    onset_min: 3.0
+    tau_min: 6.0
+    targets: {RR: 24, SpO2: 89}
+    note: "Relieves bronchospasm; adjunct to oxygen/NIV."
