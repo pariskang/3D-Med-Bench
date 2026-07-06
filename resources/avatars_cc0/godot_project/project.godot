@@ -1,0 +1,24 @@
+; CliniCraft Avatar Renderer — Godot 4 headless render tool (Tier A skeleton).
+; Engine configuration file. Godot 4.2+.
+
+config_version=5
+
+[application]
+
+config/name="CliniCraft Avatar Renderer"
+config/description="Headless Tier-A avatar renderer for CliniCraft-Bench C3 (3D perception). SKELETON — requires a Godot 4 runtime to produce pixels."
+run/main_scene="res://scenes/render_scene.tscn"
+config/features=PackedStringArray("4.2", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=512
+window/size/viewport_height=512
+
+[rendering]
+
+; OpenGL compatibility backend renders under software rasterisers / xvfb more
+; reliably than Vulkan for a headless render tool.
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=false

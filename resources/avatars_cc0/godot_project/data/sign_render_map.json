@@ -1,0 +1,277 @@
+{
+  "pallor": {
+    "description": "皮肤及粘膜苍白",
+    "tier": "T1",
+    "skin_color_rgb": [
+      220,
+      195,
+      180
+    ],
+    "blendshapes": {
+      "skin_pallor": 0.75
+    },
+    "texture_overrides": {
+      "face": "pallor_overlay_0.8"
+    }
+  },
+  "cyanosis": {
+    "description": "发绀：口唇、甲床青紫",
+    "tier": "T1",
+    "skin_color_rgb": [
+      170,
+      160,
+      190
+    ],
+    "blendshapes": {
+      "lip_cyanosis": 0.8,
+      "nail_cyanosis": 0.7
+    },
+    "texture_overrides": {
+      "lips": "cyanosis_lips",
+      "nails": "cyanosis_nails"
+    }
+  },
+  "jaundice": {
+    "description": "黄疸：皮肤巩膜黄染",
+    "tier": "T1",
+    "skin_color_rgb": [
+      240,
+      210,
+      110
+    ],
+    "blendshapes": {
+      "skin_jaundice": 0.85
+    },
+    "texture_overrides": {
+      "sclera": "icteric_sclera",
+      "face": "jaundice_overlay"
+    }
+  },
+  "diaphoresis": {
+    "description": "大汗淋漓",
+    "tier": "T1",
+    "blendshapes": {
+      "sweat_forehead": 0.9,
+      "sweat_face": 0.75
+    },
+    "animation": "restless_fidget",
+    "texture_overrides": {
+      "face": "sweat_overlay",
+      "shirt": "wet_shirt"
+    }
+  },
+  "respiratory_distress": {
+    "description": "呼吸窘迫：辅助呼吸肌使用，端坐呼吸",
+    "tier": "T1",
+    "blendshapes": {
+      "scalene_contraction": 0.8,
+      "sternocleidomastoid_contraction": 0.7,
+      "nasal_flaring": 0.6
+    },
+    "animation": "accessory_muscle_breathing",
+    "posture": "orthopnea",
+    "severity_overrides": {
+      "mild": {
+        "blendshapes": {
+          "scalene_contraction": 0.3,
+          "nasal_flaring": 0.2
+        }
+      },
+      "severe": {
+        "blendshapes": {
+          "scalene_contraction": 1.0,
+          "sternocleidomastoid_contraction": 0.9,
+          "nasal_flaring": 1.0,
+          "intercostal_recession": 0.8
+        },
+        "posture": "tripod",
+        "animation": "severe_respiratory_distress"
+      }
+    }
+  },
+  "ataxic_gait": {
+    "description": "共济失调步态：宽基底，步态不稳",
+    "tier": "T1",
+    "animation": "ataxic_walk",
+    "posture": "wide_stance",
+    "severity_overrides": {
+      "mild": {
+        "animation": "mild_ataxic_walk"
+      },
+      "severe": {
+        "animation": "severe_ataxic_walk",
+        "posture": "requires_support"
+      }
+    }
+  },
+  "intention_tremor": {
+    "description": "意向性震颤",
+    "tier": "T1",
+    "blendshapes": {
+      "hand_tremor_amplitude": 0.6
+    },
+    "animation": "intention_tremor_reach"
+  },
+  "resting_tremor": {
+    "description": "静止性震颤（Parkinson样）",
+    "tier": "T1",
+    "blendshapes": {
+      "hand_tremor_amplitude": 0.5
+    },
+    "animation": "resting_tremor_4hz"
+  },
+  "ptosis": {
+    "description": "上睑下垂",
+    "tier": "T1",
+    "blendshapes": {
+      "eyelid_ptosis_r": 0.65,
+      "eyelid_ptosis_l": 0.1
+    },
+    "severity_overrides": {
+      "bilateral": {
+        "blendshapes": {
+          "eyelid_ptosis_r": 0.65,
+          "eyelid_ptosis_l": 0.6
+        }
+      }
+    }
+  },
+  "facial_palsy": {
+    "description": "面瘫",
+    "tier": "T1",
+    "blendshapes": {
+      "nasolabial_droop_r": 0.8,
+      "corner_mouth_droop_r": 0.75,
+      "eye_closure_weakness_r": 0.6
+    }
+  },
+  "oedema_lower_limb": {
+    "description": "下肢凹陷性水肿",
+    "tier": "T1",
+    "blendshapes": {
+      "ankle_oedema": 0.7,
+      "shin_oedema": 0.5
+    },
+    "texture_overrides": {
+      "lower_legs": "oedema_texture"
+    }
+  },
+  "clubbing": {
+    "description": "杵状指",
+    "tier": "T1",
+    "blendshapes": {
+      "finger_clubbing": 0.85
+    },
+    "texture_overrides": {
+      "nails": "clubbing_nails"
+    }
+  },
+  "erythema_nodosum": {
+    "description": "结节性红斑",
+    "tier": "T1",
+    "texture_overrides": {
+      "lower_legs": "erythema_nodosum_rash"
+    }
+  },
+  "malar_rash": {
+    "description": "颧部蝶形红斑（SLE）",
+    "tier": "T1",
+    "texture_overrides": {
+      "face": "malar_rash_butterfly"
+    }
+  },
+  "herpes_zoster": {
+    "description": "带状疱疹：单侧带状分布疱疹",
+    "tier": "T1",
+    "texture_overrides": {
+      "trunk_r": "herpes_zoster_vesicles"
+    }
+  },
+  "antalgic_gait": {
+    "description": "减痛步态",
+    "tier": "T1",
+    "animation": "antalgic_walk_right"
+  },
+  "hemiparetic_gait": {
+    "description": "偏瘫步态（划圈步态）",
+    "tier": "T1",
+    "animation": "hemiplegic_circumduction_gait"
+  },
+  "decorticate_posture": {
+    "description": "去皮质强直",
+    "tier": "T1",
+    "animation": "decorticate_posture",
+    "posture": "decorticate"
+  },
+  "decerebrate_posture": {
+    "description": "去大脑强直",
+    "tier": "T1",
+    "animation": "decerebrate_posture",
+    "posture": "decerebrate"
+  },
+  "tongue_pale": {
+    "description": "舌淡（气血亏虚）",
+    "tier": "T1",
+    "texture_overrides": {
+      "tongue": "tongue_pale_white_coat"
+    }
+  },
+  "tongue_red": {
+    "description": "舌红（热证/阴虚）",
+    "tier": "T1",
+    "texture_overrides": {
+      "tongue": "tongue_red_yellow_coat"
+    }
+  },
+  "tongue_purple": {
+    "description": "舌紫暗（血瘀）",
+    "tier": "T1",
+    "texture_overrides": {
+      "tongue": "tongue_purple_petechiae"
+    }
+  },
+  "face_pale_luster": {
+    "description": "面色苍白无华（气虚/血虚）",
+    "tier": "T1",
+    "blendshapes": {
+      "skin_pallor": 0.8,
+      "skin_luster": 0.2
+    }
+  },
+  "face_sallow": {
+    "description": "面色萎黄（脾虚）",
+    "tier": "T1",
+    "skin_color_rgb": [
+      230,
+      205,
+      140
+    ]
+  },
+  "hepatomegaly": {
+    "description": "肝大（触诊）",
+    "tier": "T2"
+  },
+  "splenomegaly": {
+    "description": "脾大（触诊）",
+    "tier": "T2"
+  },
+  "lymphadenopathy": {
+    "description": "淋巴结肿大",
+    "tier": "T2"
+  },
+  "heart_murmur": {
+    "description": "心脏杂音（听诊）",
+    "tier": "T3",
+    "audio_clip": "systolic_murmur_grade3"
+  },
+  "wheeze": {
+    "description": "哮鸣音（肺部听诊）",
+    "tier": "T3",
+    "audio_clip": "expiratory_wheeze"
+  },
+  "crackles": {
+    "description": "湿啰音（肺部听诊）",
+    "tier": "T3",
+    "audio_clip": "bibasilar_crackles"
+  }
+}

@@ -105,6 +105,15 @@ class StubSceneRenderer:
 class GodotSceneRenderer:
     """Drives a Godot 4 headless process to render avatar frames."""
 
+    # Files that must exist for the Godot project to be runnable.
+    REQUIRED_FILES = [
+        "project.godot",
+        "scenes/render_scene.tscn",
+        "scripts/render_main.gd",
+        "scripts/procedural_avatar.gd",
+        "data/sign_render_map.json",
+    ]
+
     def __init__(self, godot_bin: Path, project_dir: Path, out_dir: Path) -> None:
         self._godot = godot_bin
         self._project = project_dir
@@ -115,6 +124,18 @@ class GodotSceneRenderer:
     def is_photoreal(self) -> bool:
         return True
 
+    def build_command(self, sign_ids: str, view: str, out_file: Path) -> list[str]:
+        """The exact CLI the GDScript render_main.gd parses (see project README)."""
+        return [
+            str(self._godot), "--headless", "--path", str(self._project),
+            "--", "--signs", sign_ids, "--view", view, "--out", str(out_file),
+        ]
+
+    def validate(self) -> tuple[bool, list[str]]:
+        """Check the Godot project has all required files. (Does not run Godot.)"""
+        missing = [f for f in self.REQUIRED_FILES if not (self._project / f).exists()]
+        return (not missing), missing
+
     def render(
         self, signs: list[VisibleSign], patient: PatientConfig, view: str = "patient_front"
     ) -> list[str]:
@@ -123,24 +144,32 @@ class GodotSceneRenderer:
         out_file = self._out / f"frame_{digest}.png"
         if out_file.exists():  # deterministic cache
             return [str(out_file)]
-        cmd = [
-            str(self._godot), "--headless", "--path", str(self._project),
-            "--", "--signs", sign_ids, "--view", view, "--out", str(out_file),
-        ]
+        cmd = self.build_command(sign_ids, view, out_file)
         try:
-            subprocess.run(cmd, check=True, capture_output=True, timeout=60)
-            return [str(out_file)]
+            subprocess.run(cmd, check=True, capture_output=True, timeout=120)
+            if out_file.exists():
+                return [str(out_file)]
+            logger.error("Godot exited 0 but produced no frame; falling back to stub")
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
             logger.error(f"Godot render failed: {e}; falling back to stub")
-            return StubSceneRenderer().render(signs, patient, view)
+        return StubSceneRenderer().render(signs, patient, view)
+
+
+def godot_project_dir() -> Path:
+    return settings.resources_dir / "avatars_cc0" / "godot_project"
 
 
 def get_scene_renderer() -> SceneRenderer:
-    """Factory: Godot renderer if configured & present, else stub."""
+    """Factory: Godot renderer if a binary + a valid project are present, else stub."""
     if settings.godot_bin and Path(settings.godot_bin).exists():
-        project = settings.resources_dir / "avatars_cc0" / "godot_project"
+        project = godot_project_dir()
         out = settings.resources_dir / "_render_cache"
-        if project.exists():
-            return GodotSceneRenderer(Path(settings.godot_bin), project, out)
-        logger.warning(f"Godot bin set but project missing at {project}; using stub")
+        if (project / "project.godot").exists():
+            renderer = GodotSceneRenderer(Path(settings.godot_bin), project, out)
+            ok, missing = renderer.validate()
+            if ok:
+                return renderer
+            logger.warning(f"Godot project incomplete (missing {missing}); using stub")
+        else:
+            logger.warning(f"Godot bin set but no project.godot at {project}; using stub")
     return StubSceneRenderer()
