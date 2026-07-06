@@ -1,0 +1,222 @@
+# Sign Rendering Library
+# Maps clinical sign IDs to Godot 4 / UE5 MetaHuman render parameters
+# Source: JAMA Rational Clinical Examination + clinical expertise
+# tier: T1=fully renderable 3D | T2=partial/text hybrid | T3=dialogue only
+
+pallor:
+  description: "皮肤及粘膜苍白"
+  tier: T1
+  base:
+    blendshapes: {skin_pallor: 0.75}
+    skin_color_rgb: [220, 195, 180]
+    texture_overrides: {face: "pallor_overlay_0.8"}
+
+cyanosis:
+  description: "发绀：口唇、甲床青紫"
+  tier: T1
+  base:
+    blendshapes: {lip_cyanosis: 0.8, nail_cyanosis: 0.7}
+    skin_color_rgb: [170, 160, 190]
+    texture_overrides: {lips: "cyanosis_lips", nails: "cyanosis_nails"}
+
+jaundice:
+  description: "黄疸：皮肤巩膜黄染"
+  tier: T1
+  base:
+    blendshapes: {skin_jaundice: 0.85}
+    skin_color_rgb: [240, 210, 110]
+    texture_overrides: {sclera: "icteric_sclera", face: "jaundice_overlay"}
+
+diaphoresis:
+  description: "大汗淋漓"
+  tier: T1
+  base:
+    blendshapes: {sweat_forehead: 0.9, sweat_face: 0.75}
+    texture_overrides: {face: "sweat_overlay", shirt: "wet_shirt"}
+    animation: "restless_fidget"
+
+respiratory_distress:
+  description: "呼吸窘迫：辅助呼吸肌使用，端坐呼吸"
+  tier: T1
+  base:
+    blendshapes: {scalene_contraction: 0.8, sternocleidomastoid_contraction: 0.7,
+                  nasal_flaring: 0.6}
+    posture: orthopnea
+    animation: "accessory_muscle_breathing"
+  severity_overrides:
+    mild:
+      blendshapes: {scalene_contraction: 0.3, nasal_flaring: 0.2}
+    severe:
+      blendshapes: {scalene_contraction: 1.0, sternocleidomastoid_contraction: 0.9,
+                    nasal_flaring: 1.0, intercostal_recession: 0.8}
+      posture: tripod
+      animation: "severe_respiratory_distress"
+
+ataxic_gait:
+  description: "共济失调步态：宽基底，步态不稳"
+  tier: T1
+  base:
+    animation: "ataxic_walk"
+    posture: wide_stance
+  severity_overrides:
+    mild:
+      animation: "mild_ataxic_walk"
+    severe:
+      animation: "severe_ataxic_walk"
+      posture: requires_support
+
+intention_tremor:
+  description: "意向性震颤"
+  tier: T1
+  base:
+    blendshapes: {hand_tremor_amplitude: 0.6}
+    animation: "intention_tremor_reach"
+
+resting_tremor:
+  description: "静止性震颤（Parkinson样）"
+  tier: T1
+  base:
+    blendshapes: {hand_tremor_amplitude: 0.5}
+    animation: "resting_tremor_4hz"
+
+ptosis:
+  description: "上睑下垂"
+  tier: T1
+  base:
+    blendshapes: {eyelid_ptosis_r: 0.65, eyelid_ptosis_l: 0.1}
+  severity_overrides:
+    bilateral:
+      blendshapes: {eyelid_ptosis_r: 0.65, eyelid_ptosis_l: 0.60}
+
+facial_palsy:
+  description: "面瘫"
+  tier: T1
+  base:
+    blendshapes: {nasolabial_droop_r: 0.8, corner_mouth_droop_r: 0.75,
+                  eye_closure_weakness_r: 0.6}
+
+oedema_lower_limb:
+  description: "下肢凹陷性水肿"
+  tier: T1
+  base:
+    blendshapes: {ankle_oedema: 0.7, shin_oedema: 0.5}
+    texture_overrides: {lower_legs: "oedema_texture"}
+
+clubbing:
+  description: "杵状指"
+  tier: T1
+  base:
+    blendshapes: {finger_clubbing: 0.85}
+    texture_overrides: {nails: "clubbing_nails"}
+
+erythema_nodosum:
+  description: "结节性红斑"
+  tier: T1
+  base:
+    texture_overrides: {lower_legs: "erythema_nodosum_rash"}
+
+malar_rash:
+  description: "颧部蝶形红斑（SLE）"
+  tier: T1
+  base:
+    texture_overrides: {face: "malar_rash_butterfly"}
+
+herpes_zoster:
+  description: "带状疱疹：单侧带状分布疱疹"
+  tier: T1
+  base:
+    texture_overrides: {trunk_r: "herpes_zoster_vesicles"}
+
+antalgic_gait:
+  description: "减痛步态"
+  tier: T1
+  base:
+    animation: "antalgic_walk_right"
+
+hemiparetic_gait:
+  description: "偏瘫步态（划圈步态）"
+  tier: T1
+  base:
+    animation: "hemiplegic_circumduction_gait"
+
+decorticate_posture:
+  description: "去皮质强直"
+  tier: T1
+  base:
+    posture: decorticate
+    animation: "decorticate_posture"
+
+decerebrate_posture:
+  description: "去大脑强直"
+  tier: T1
+  base:
+    posture: decerebrate
+    animation: "decerebrate_posture"
+
+# --- TCM signs (§12) ---
+tongue_pale:
+  description: "舌淡（气血亏虚）"
+  tier: T1
+  base:
+    texture_overrides: {tongue: "tongue_pale_white_coat"}
+
+tongue_red:
+  description: "舌红（热证/阴虚）"
+  tier: T1
+  base:
+    texture_overrides: {tongue: "tongue_red_yellow_coat"}
+
+tongue_purple:
+  description: "舌紫暗（血瘀）"
+  tier: T1
+  base:
+    texture_overrides: {tongue: "tongue_purple_petechiae"}
+
+face_pale_luster:
+  description: "面色苍白无华（气虚/血虚）"
+  tier: T1
+  base:
+    blendshapes: {skin_pallor: 0.8, skin_luster: 0.2}
+
+face_sallow:
+  description: "面色萎黄（脾虚）"
+  tier: T1
+  base:
+    skin_color_rgb: [230, 205, 140]
+
+# --- T2/T3 signs (text supplement required) ---
+hepatomegaly:
+  description: "肝大（触诊）"
+  tier: T2
+  base:
+    description: "腹部视诊正常，需触诊评估"
+
+splenomegaly:
+  description: "脾大（触诊）"
+  tier: T2
+  base:
+    description: "腹部轻度隆起，需触诊/超声确认"
+
+lymphadenopathy:
+  description: "淋巴结肿大"
+  tier: T2
+  base:
+    description: "颈部/腋下淋巴结可见轻度隆起"
+
+heart_murmur:
+  description: "心脏杂音（听诊）"
+  tier: T3
+  base:
+    audio_clip: "systolic_murmur_grade3"
+
+wheeze:
+  description: "哮鸣音（肺部听诊）"
+  tier: T3
+  base:
+    audio_clip: "expiratory_wheeze"
+
+crackles:
+  description: "湿啰音（肺部听诊）"
+  tier: T3
+  base:
+    audio_clip: "bibasilar_crackles"

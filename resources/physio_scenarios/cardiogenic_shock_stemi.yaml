@@ -1,0 +1,34 @@
+scenario_id: cardiogenic_shock_stemi
+condition: "STEMI|心肌梗死|cardiogenic shock|心源性休克|myocardial infarction|急性冠脉|acute coronary"
+description: >
+  ST-elevation myocardial infarction complicated by cardiogenic (pump-failure)
+  shock. Untreated the failing ventricle drives progressive hypotension and
+  hypoxaemia; timely reperfusion is decisive.
+source: >
+  ACC/AHA STEMI guideline: primary PCI (door-to-balloon) is definitive;
+  inotropes/vasopressors temporise cardiogenic shock.
+baseline: {HR: 110, SBP: 85, DBP: 58, RR: 24, SpO2: 90, T: 36.9, GCS: 15}
+untreated_trajectory:
+  - {t_min: 0,  HR: 110, SBP: 85, DBP: 58, RR: 24, SpO2: 90, GCS: 15}
+  - {t_min: 15, HR: 116, SBP: 78, DBP: 52, RR: 26, SpO2: 87, GCS: 14}
+  - {t_min: 30, HR: 122, SBP: 70, DBP: 46, RR: 28, SpO2: 84, GCS: 13}
+  - {t_min: 45, HR: 128, SBP: 62, DBP: 40, RR: 30, SpO2: 80, GCS: 12}
+treatments:
+  - treatment: primary_pci
+    aliases: ["pci", "导管", "介入", "支架", "revascular", "stent", "primary", "开通", "reperfusion", "溶栓", "thrombolysis"]
+    onset_min: 5.0
+    tau_min: 12.0
+    targets: {SBP: 112, DBP: 70, HR: 88, SpO2: 96, RR: 18}
+    note: "Definitive reperfusion — door-to-balloon; reverses pump failure."
+  - treatment: inotrope
+    aliases: ["dobutamine", "多巴酚丁胺", "inotrope", "正性肌力", "milrinone", "米力农"]
+    onset_min: 2.0
+    tau_min: 5.0
+    targets: {SBP: 96, DBP: 60, HR: 106}
+    note: "Temporises cardiogenic shock; raises contractility and HR."
+  - treatment: oxygen
+    aliases: ["oxygen", "o2", "吸氧", "氧疗"]
+    onset_min: 1.0
+    tau_min: 3.0
+    targets: {SpO2: 96}
+    note: "Only if hypoxaemic (SpO2 < 90%)."

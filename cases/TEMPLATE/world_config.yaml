@@ -1,0 +1,43 @@
+case_id: TEMPLATE-001
+schema_version: '3.0'
+source:
+  provenance: private_hospital
+  deid_standard: GB/T42460-2023
+  contamination_free: true
+  ethics_approval: ''
+  data_class_level: ''
+strata:
+  difficulty: hard
+  rarity: uncommon
+  error_prone: false
+  specialty: general
+  perception_tier: T1
+  dynamic_coverage: 0.0
+world_config:
+  seed: 42
+  physio:
+    engine: scripted
+    dynamic_coverage: 0.0
+    initial_state:
+      HR: 88
+      SBP: 118
+      DBP: 76
+      SpO2: 97
+      RR: 18
+      T: 37.2
+  patient:
+    age: null
+    sex: null
+    persona: cooperative
+    health_literacy: mid
+    disclosure: full
+    temperament: ''
+    npc_role: patient
+  available_tests: []
+  available_imaging: []
+  max_turns: 40
+  time_pressure: false
+  perception_mode: frame_stream
+presentation_md: presentation.md
+ground_truth_ref: ground_truth_graph.json
+rubric_ref: tests/rubric.json

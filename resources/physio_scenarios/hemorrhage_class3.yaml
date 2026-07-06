@@ -1,0 +1,34 @@
+scenario_id: hemorrhage_class3
+condition: "hemorrhage|失血|出血|hemorrhagic shock|失血性休克|创伤"
+description: >
+  ATLS Class III haemorrhagic shock (30-40% blood volume loss, 1500-2000 mL).
+  Presents with tachycardia, hypotension, tachypnoea and altered mental status;
+  progresses to Class IV (peri-arrest) if untreated.
+source: >
+  ATLS Advanced Trauma Life Support 10th ed. haemorrhage classification
+  (Class III: HR 120-140, decreased SBP, RR 30-40, confused mentation).
+baseline: {HR: 125, SBP: 88, DBP: 60, RR: 32, SpO2: 94, T: 36.5, GCS: 14}
+untreated_trajectory:
+  - {t_min: 0,  HR: 125, SBP: 88, DBP: 60, RR: 32, SpO2: 94, GCS: 14}
+  - {t_min: 10, HR: 135, SBP: 78, DBP: 54, RR: 35, SpO2: 91, GCS: 13}
+  - {t_min: 20, HR: 148, SBP: 68, DBP: 46, RR: 38, SpO2: 88, GCS: 12}
+  - {t_min: 30, HR: 160, SBP: 55, DBP: 38, RR: 40, SpO2: 84, GCS: 10}
+treatments:
+  - treatment: crystalloid_resuscitation
+    aliases: ["fluid", "crystalloid", "saline", "生理盐水", "补液", "ringer", "乳酸林格", "林格"]
+    onset_min: 1.0
+    tau_min: 8.0
+    targets: {SBP: 95, DBP: 62, HR: 110, SpO2: 94}
+    note: "Partial: restores preload but does not stop bleeding."
+  - treatment: blood_transfusion
+    aliases: ["blood", "transfusion", "输血", "prbc", "packed red", "红细胞"]
+    onset_min: 2.0
+    tau_min: 10.0
+    targets: {SBP: 108, DBP: 68, HR: 96, SpO2: 97}
+    note: "Restores oxygen-carrying capacity and volume."
+  - treatment: hemorrhage_control
+    aliases: ["surgery", "手术", "止血", "control", "ligation", "结扎", "tourniquet", "止血带", "介入栓塞"]
+    onset_min: 3.0
+    tau_min: 12.0
+    targets: {SBP: 116, DBP: 74, HR: 86, RR: 18, SpO2: 98, GCS: 15}
+    note: "Definitive source control — the decisive intervention."

@@ -1,0 +1,24 @@
+.env
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+.prefect/
+mlruns/
+mlflow.db
+clinicraft.db
+*.sqlite
+# Raw case files (private medical data)
+cases/*/ground_truth_graph.json
+cases/*/oracle/
+# De-id reports (may contain quasi-identifiers)
+governance/deid_report/
+*.log
+.DS_Store

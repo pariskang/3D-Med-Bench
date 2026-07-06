@@ -1,0 +1,33 @@
+scenario_id: anaphylaxis
+condition: "anaphylaxis|过敏性休克|严重过敏|anaphylactic"
+description: >
+  Anaphylactic shock: distributive shock with bronchospasm and hypoxaemia.
+  Deteriorates rapidly to peri-arrest within minutes if epinephrine is delayed.
+source: >
+  WAO Anaphylaxis Guidance 2020 / Resuscitation Council: IM adrenaline is
+  first-line; response is rapid (minutes).
+baseline: {HR: 130, SBP: 78, DBP: 40, RR: 28, SpO2: 88, T: 36.8, GCS: 14}
+untreated_trajectory:
+  - {t_min: 0,  HR: 130, SBP: 78, DBP: 40, RR: 28, SpO2: 88, GCS: 14}
+  - {t_min: 5,  HR: 140, SBP: 66, DBP: 34, RR: 32, SpO2: 82, GCS: 13}
+  - {t_min: 10, HR: 150, SBP: 55, DBP: 28, RR: 36, SpO2: 76, GCS: 11}
+  - {t_min: 15, HR: 158, SBP: 45, DBP: 22, RR: 38, SpO2: 68, GCS: 8}
+treatments:
+  - treatment: epinephrine
+    aliases: ["epinephrine", "adrenaline", "肾上腺素", "epi", "epipen"]
+    onset_min: 1.0
+    tau_min: 4.0
+    targets: {SBP: 116, DBP: 72, HR: 96, SpO2: 97, RR: 18, GCS: 15}
+    note: "First-line; rapid reversal of shock and bronchospasm."
+  - treatment: iv_fluids
+    aliases: ["fluid", "crystalloid", "生理盐水", "补液", "ringer"]
+    onset_min: 1.0
+    tau_min: 8.0
+    targets: {SBP: 100, DBP: 58}
+    note: "Adjunct for distributive hypotension."
+  - treatment: adjunct_antihistamine_steroid
+    aliases: ["antihistamine", "抗组胺", "steroid", "激素", "hydrocortisone", "氢化可的松", "苯海拉明"]
+    onset_min: 10.0
+    tau_min: 15.0
+    targets: {SpO2: 95}
+    note: "Second-line adjunct; does not replace adrenaline."

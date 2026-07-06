@@ -1,0 +1,33 @@
+scenario_id: septic_shock
+condition: "sepsis|septic shock|脓毒症|感染性休克|脓毒性休克|severe infection"
+description: >
+  Sepsis-3 septic shock: distributive shock with vasoplegia, tachycardia,
+  fever, tachypnoea and hyperlactataemia (lactate > 2 mmol/L despite fluids).
+source: >
+  Sepsis-3 (JAMA 2016) + Surviving Sepsis Campaign 2021 bundle (early
+  antibiotics, 30 mL/kg crystalloid, vasopressors for MAP ≥ 65 mmHg).
+baseline: {HR: 118, SBP: 82, DBP: 45, RR: 26, SpO2: 92, T: 38.8, lactate: 4.2, GCS: 14}
+untreated_trajectory:
+  - {t_min: 0,  HR: 118, SBP: 82, DBP: 45, RR: 26, SpO2: 92, T: 38.8, lactate: 4.2}
+  - {t_min: 15, HR: 126, SBP: 75, DBP: 40, RR: 28, SpO2: 90, T: 39.1, lactate: 5.0}
+  - {t_min: 30, HR: 135, SBP: 68, DBP: 36, RR: 30, SpO2: 88, T: 39.3, lactate: 6.1}
+  - {t_min: 45, HR: 142, SBP: 60, DBP: 32, RR: 33, SpO2: 85, T: 39.0, lactate: 7.5}
+treatments:
+  - treatment: fluid_resuscitation
+    aliases: ["fluid", "crystalloid", "生理盐水", "补液", "30ml/kg", "ringer", "林格"]
+    onset_min: 1.0
+    tau_min: 10.0
+    targets: {SBP: 92, DBP: 52, HR: 108}
+    note: "First-line: 30 mL/kg crystalloid."
+  - treatment: antibiotics
+    aliases: ["antibiotic", "抗生素", "头孢", "美罗培南", "meropenem", "vancomycin", "万古", "cef", "piperacillin", "哌拉西林"]
+    onset_min: 5.0
+    tau_min: 30.0
+    targets: {T: 37.5, lactate: 2.4, HR: 96, SpO2: 95}
+    note: "Source control — slow but decisive; give within 1 h."
+  - treatment: vasopressor
+    aliases: ["norepinephrine", "去甲肾", "vasopressor", "升压", "多巴胺", "dopamine", "noradrenaline"]
+    onset_min: 1.0
+    tau_min: 5.0
+    targets: {SBP: 102, DBP: 62}
+    note: "For MAP ≥ 65 mmHg when fluid-refractory."

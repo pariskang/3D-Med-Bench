@@ -1,0 +1,33 @@
+scenario_id: dka
+condition: "DKA|糖尿病酮症酸中毒|diabetic ketoacidosis|酮症酸中毒|ketoacidosis"
+description: >
+  Diabetic ketoacidosis: volume depletion with compensatory Kussmaul
+  respiration. Untreated, dehydration worsens tachycardia and hypotension.
+source: >
+  ADA / JBDS DKA management: IV fluids first, then fixed-rate insulin infusion,
+  with potassium replacement; acidosis (and Kussmaul RR) resolves with insulin.
+baseline: {HR: 120, SBP: 95, DBP: 62, RR: 30, SpO2: 98, T: 37.0, GCS: 14}
+untreated_trajectory:
+  - {t_min: 0,  HR: 120, SBP: 95, DBP: 62, RR: 30, SpO2: 98, GCS: 14}
+  - {t_min: 20, HR: 126, SBP: 88, DBP: 56, RR: 31, SpO2: 98, GCS: 13}
+  - {t_min: 40, HR: 132, SBP: 80, DBP: 50, RR: 32, SpO2: 97, GCS: 12}
+  - {t_min: 60, HR: 138, SBP: 72, DBP: 44, RR: 33, SpO2: 96, GCS: 11}
+treatments:
+  - treatment: iv_fluids
+    aliases: ["fluid", "crystalloid", "生理盐水", "补液", "0.9%", "ringer", "林格"]
+    onset_min: 1.0
+    tau_min: 10.0
+    targets: {SBP: 115, DBP: 74, HR: 96}
+    note: "First-line: corrects volume depletion."
+  - treatment: insulin
+    aliases: ["insulin", "胰岛素", "fixed-rate", "泵入胰岛素"]
+    onset_min: 5.0
+    tau_min: 25.0
+    targets: {RR: 18, HR: 90, GCS: 15}
+    note: "Resolves ketoacidosis; Kussmaul RR normalises as pH corrects."
+  - treatment: potassium
+    aliases: ["potassium", "钾", "kcl", "氯化钾"]
+    onset_min: 10.0
+    tau_min: 20.0
+    targets: {HR: 92}
+    note: "Replace before/with insulin to avoid hypokalaemia."

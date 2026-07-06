@@ -1,0 +1,173 @@
+# Scripted Findings Library
+# Each key = finding_id used in GTG workup steps and order_test actions
+# lr_pairs: {dx: {lr_pos: X, lr_neg: Y}}  — from JAMA Rational Clinical Examination
+# trajectory: time-dependent results [{t_min: 0, value: "..."}, ...]
+# choosing_wisely: true if ordering is flagged by Choosing Wisely
+
+# --- Cardiac ---
+troponin_I:
+  display: "高敏肌钙蛋白I（hs-TnI）"
+  result_template: "hs-TnI: {value} ng/L（参考值 <26 ng/L）"
+  result_value: "2456"
+  lr_pairs:
+    STEMI: {lr_pos: 32.0, lr_neg: 0.04}
+    NSTEMI: {lr_pos: 25.0, lr_neg: 0.07}
+    acute_HF: {lr_pos: 2.5, lr_neg: 0.6}
+  trajectory:
+    - {t_min: 0, value: "12"}
+    - {t_min: 180, value: "2456"}
+    - {t_min: 360, value: "8900"}
+    - {t_min: 720, value: "4200"}
+
+ECG:
+  display: "心电图"
+  result_template: "心电图示：{value}"
+  result_value: "窦性心动过速，V1-V4导联ST段抬高0.3-0.5mV，对应导联ST压低"
+  lr_pairs:
+    STEMI: {lr_pos: 100.0, lr_neg: 0.1}
+    pericarditis: {lr_pos: 0.2, lr_neg: 5.0}
+
+BNP:
+  display: "脑钠肽（BNP）"
+  result_template: "BNP: {value} pg/mL"
+  result_value: "1860"
+  lr_pairs:
+    acute_HF: {lr_pos: 6.5, lr_neg: 0.1}
+    COPD_exacerbation: {lr_pos: 1.2, lr_neg: 0.8}
+
+echocardiogram:
+  display: "超声心动图"
+  result_template: "超声心动图：{value}"
+  result_value: "EF 30%，前壁运动减低，左心室扩大，二尖瓣轻度反流"
+  lr_pairs:
+    systolic_HF: {lr_pos: 18.0, lr_neg: 0.2}
+
+# --- Respiratory ---
+ABG:
+  display: "动脉血气分析"
+  result_template: "动脉血气：{value}"
+  result_value: "pH 7.32, PaO2 56mmHg, PaCO2 52mmHg, HCO3 26, BE +2"
+  lr_pairs:
+    type_2_respiratory_failure: {lr_pos: 45.0, lr_neg: 0.05}
+    ARDS: {lr_pos: 3.0, lr_neg: 0.7}
+
+CXR:
+  display: "胸部X线"
+  result_template: "胸部X线：{value}"
+  result_value: "双肺纹理增粗，双下肺渗出影，心影增大，肺门影增宽"
+  lr_pairs:
+    acute_HF: {lr_pos: 3.1, lr_neg: 0.5}
+    pneumonia: {lr_pos: 5.0, lr_neg: 0.3}
+
+chest_CT:
+  display: "胸部CT"
+  result_template: "胸部CT：{value}"
+  result_value: "双肺多发磨玻璃影，以双下叶为著，纵隔无明显肿大淋巴结"
+  lr_pairs:
+    COVID19: {lr_pos: 12.0, lr_neg: 0.1}
+    pneumonia: {lr_pos: 8.0, lr_neg: 0.2}
+    pulmonary_embolism: {lr_pos: 0.3, lr_neg: 3.0}
+
+CTPA:
+  display: "CT肺动脉造影（CTPA）"
+  result_template: "CTPA：{value}"
+  result_value: "右肺下叶肺动脉主干充盈缺损，右侧肺动脉主干栓塞"
+  lr_pairs:
+    pulmonary_embolism: {lr_pos: 50.0, lr_neg: 0.04}
+
+D_dimer:
+  display: "D-二聚体"
+  result_template: "D-二聚体: {value} μg/L FEU"
+  result_value: "8560"
+  lr_pairs:
+    pulmonary_embolism: {lr_pos: 1.5, lr_neg: 0.07}
+    DVT: {lr_pos: 1.5, lr_neg: 0.08}
+  choosing_wisely: false  # only low pretest-P warranted
+
+# --- Neurological ---
+MRI_brain:
+  display: "头颅MRI"
+  result_template: "头颅MRI：{value}"
+  result_value: "DWI序列见左侧基底节区及内囊后肢高信号，ADC低信号，提示急性脑梗死"
+  lr_pairs:
+    acute_ischemic_stroke: {lr_pos: 100.0, lr_neg: 0.05}
+    MS: {lr_pos: 0.5, lr_neg: 2.5}
+
+LP:
+  display: "腰椎穿刺脑脊液检查"
+  result_template: "脑脊液：{value}"
+  result_value: "压力180mmH2O，白细胞320/μL（多核为主），蛋白1.8g/L，葡萄糖1.2mmol/L（血糖4.8mmol/L），涂片见革兰阴性双球菌"
+  lr_pairs:
+    bacterial_meningitis: {lr_pos: 35.0, lr_neg: 0.02}
+    viral_meningitis: {lr_pos: 0.1, lr_neg: 5.0}
+
+EEG:
+  display: "脑电图"
+  result_template: "脑电图：{value}"
+  result_value: "弥漫性慢波，双侧额颞区偶见痫样放电"
+  lr_pairs:
+    epilepsy: {lr_pos: 8.0, lr_neg: 0.5}
+    encephalopathy: {lr_pos: 3.0, lr_neg: 0.6}
+
+# --- Rheumatology / Immunology ---
+ANA:
+  display: "抗核抗体（ANA）"
+  result_template: "ANA: {value}（1:320滴度）"
+  result_value: "阳性，核颗粒型，滴度1:320"
+  lr_pairs:
+    SLE: {lr_pos: 4.0, lr_neg: 0.08}
+    autoimmune_hepatitis: {lr_pos: 2.5, lr_neg: 0.3}
+  choosing_wisely: false
+
+anti_dsDNA:
+  display: "抗dsDNA抗体"
+  result_template: "抗dsDNA: {value} IU/mL"
+  result_value: "阳性，350 IU/mL"
+  lr_pairs:
+    SLE: {lr_pos: 16.3, lr_neg: 0.4}
+
+complement_C3:
+  display: "补体C3"
+  result_template: "补体C3: {value} g/L"
+  result_value: "0.45"
+  lr_pairs:
+    SLE_flare: {lr_pos: 5.0, lr_neg: 0.4}
+
+# --- Haematology ---
+CBC:
+  display: "全血细胞计数（CBC）"
+  result_template: "血常规：{value}"
+  result_value: "WBC 14.2×10⁹/L，N% 88%，Hb 88g/L（小细胞低色素），PLT 62×10⁹/L"
+  lr_pairs:
+    bacterial_infection: {lr_pos: 4.0, lr_neg: 0.4}
+    haematological_malignancy: {lr_pos: 3.0, lr_neg: 0.6}
+
+bone_marrow_biopsy:
+  display: "骨髓穿刺+活检"
+  result_template: "骨髓活检：{value}"
+  result_value: "骨髓增生极度活跃，原始细胞占82%，免疫分型符合急性髓系白血病（AML-M2）"
+  lr_pairs:
+    AML: {lr_pos: 200.0, lr_neg: 0.01}
+
+# --- Endocrine ---
+TSH:
+  display: "促甲状腺素（TSH）"
+  result_template: "TSH: {value} mIU/L"
+  result_value: "0.02"
+  lr_pairs:
+    hyperthyroidism: {lr_pos: 22.0, lr_neg: 0.04}
+    hypothyroidism: {lr_pos: 0.01, lr_neg: 200.0}
+
+FT3_FT4:
+  display: "游离T3/T4"
+  result_template: "FT3: {value}"
+  result_value: "FT3 14.2 pmol/L↑，FT4 48.3 pmol/L↑"
+  lr_pairs:
+    hyperthyroidism: {lr_pos: 18.0, lr_neg: 0.05}
+
+HbA1c:
+  display: "糖化血红蛋白"
+  result_template: "HbA1c: {value}%"
+  result_value: "11.2"
+  lr_pairs:
+    diabetes_mellitus: {lr_pos: 40.0, lr_neg: 0.02}
